@@ -5,7 +5,9 @@ import br.com.acta.vinylpgapi.enums.PaymentStatus;
 import br.com.acta.vinylpgapi.model.base.TimestampBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "payments")
+@AllArgsConstructor @NoArgsConstructor
 public class Payment extends TimestampBase {
     @NotNull
     @Column(name = "value", nullable = false, precision = 10, scale = 2)

@@ -5,7 +5,9 @@ import br.com.acta.vinylpgapi.model.Vinyl;
 import br.com.acta.vinylpgapi.model.base.ModelBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "order_items")
+@AllArgsConstructor @NoArgsConstructor
 public class OrderItem extends ModelBase {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

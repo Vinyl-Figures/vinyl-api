@@ -3,7 +3,9 @@ package br.com.acta.vinylpgapi.model;
 import br.com.acta.vinylpgapi.model.base.TimestampBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -12,6 +14,7 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "orders")
+@AllArgsConstructor @NoArgsConstructor
 public class Order extends TimestampBase {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
