@@ -69,7 +69,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // error 401
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(mapper.writeValueAsString(
-                new ApiError("unauthenticated", "A valid bearer token is required", null)
+                new ApiError(List.of("A valid bearer token is required"), null)
         ));
     }
 }

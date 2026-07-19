@@ -1,11 +1,9 @@
 package br.com.acta.vinylpgapi.dto;
 
-
-import java.util.Map;
+import java.util.List;
 
 public record ApiError(
-        String error,
-        String message,
-        Map<String, Object> details
+        List<String> messages,
+        Integer status
 ) {
 }
