@@ -18,7 +18,7 @@ public class AuthService {
 
     public TokenResp login(LoginReq dto){
         User user = userRepo.findByEmail(dto.email())
-                .filter(u -> Hash.validatePassword(dto.password(), u.getPassword()))
+                .filter(u -> Hash.validatePassword(u.getPassword(), dto.password()))
                 .orElseThrow(() -> new UnauthorizedException("E-mail or password is incorrect"));
 
         String token = jwtService.generateToken(user.getId());
