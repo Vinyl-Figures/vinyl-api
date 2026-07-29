@@ -1,0 +1,630 @@
+### ============================================================================
+### VinylPgApi — Coleção de testes HTTP (TODOS os endpoints)
+### Sintaxe exclusiva do HTTP Client do IntelliJ IDEA / WebStorm / Ultimate
+### ============================================================================
+### Como usar:
+###   - Rode cada requisição pelo ícone verde (▶) ao lado dela, DE CIMA PRA BAIXO,
+###     ou clique com o botão direito no arquivo > "Run All Requests in File".
+###   - Os blocos "> {% client.global.set(...) %}" logo após uma requisição
+###     capturam campos da resposta (token, id) em variáveis globais do IntelliJ,
+###     usadas nas requisições seguintes via {{variavel}}.
+###   - Essas variáveis globais persistem entre execuções na mesma sessão da IDE
+###     (ficam salvas em http-client.global.env.json). Se quiser reiniciar o
+###     fluxo do zero, rode a coleção inteira de novo a partir da seção 1.
+###
+### Suba a API antes de rodar (porta padrão 8080, sem context-path):
+###   ./mvnw spring-boot:run
+### Variáveis de ambiente exigidas: DB_URL, DB_USERNAME, DB_PASSWORD,
+### JWT_SECRET, APP_CORS_ALLOWED_ORIGINS, PEPPER (usado pelo Hash/Argon2i)
+###
+### Autenticação: só POST /users e POST /auth/tokens são públicas.
+### Todas as demais rotas exigem "Authorization: Bearer <token>".
+### ============================================================================
+
+@baseUrl = http://localhost:8080/api/v1
+@contentType = application/json
+
+
+### ============================================================================
+### 1. AUTH & USERS
+### ============================================================================
+
+### 1.1 [PUBLIC] Criar usuário principal (usado no restante da coleção)
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Ana Beatriz Souza",
+  "document": "52998224725",
+  "cellphone": "11987654321",
+  "email": "ana.beatriz@example.com",
+  "password": "SenhaForte123!"
+}
+
+> {% client.global.set("userId", response.body.id); %}
+
+### 1.2 [PUBLIC] Criar segundo usuário (usado nos testes de delete/ownership)
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Carlos Eduardo Lima",
+  "document": "11144477735",
+  "cellphone": "11912345678",
+  "email": "carlos.lima@example.com",
+  "password": "OutraSenha456!"
+}
+
+> {% client.global.set("userId2", response.body.id); %}
+
+### 1.3 [PUBLIC] Login (captura o token usado no resto da coleção)
+POST {{baseUrl}}/auth/tokens
+Content-Type: {{contentType}}
+
+{
+  "email": "ana.beatriz@example.com",
+  "password": "SenhaForte123!"
+}
+
+> {% client.global.set("token", response.body.token); %}
+
+### 1.4 Login do segundo usuário (para os testes de delete/ownership no final)
+POST {{baseUrl}}/auth/tokens
+Content-Type: {{contentType}}
+
+{
+  "email": "carlos.lima@example.com",
+  "password": "OutraSenha456!"
+}
+
+> {% client.global.set("token2", response.body.token); %}
+
+### 1.5 Listar todos os usuários
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### 1.6 Buscar usuário por id
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### 1.7 Atualizar (PATCH) usuário
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Ana Beatriz Souza Costa",
+  "cellphone": "11999998888"
+}
+
+### 1.8 Logout
+# Nota: AuthService.logout() atualmente é um método vazio (no-op) no código-fonte;
+# a chamada retorna 204 mas não invalida o token de fato.
+DELETE {{baseUrl}}/auth/tokens/current
+Authorization: Bearer {{token}}
+
+
+### ============================================================================
+### 2. ADDRESSES (/users/{userId}/addresses e /addresses/{id})
+### ============================================================================
+
+### 2.1 Listar endereços do usuário
+GET {{baseUrl}}/users/{{userId}}/addresses
+Authorization: Bearer {{token}}
+
+### 2.2 Criar endereço
+POST {{baseUrl}}/users/{{userId}}/addresses
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "number": "482",
+  "complement": "Apto 61",
+  "zipCode": "01310930"
+}
+
+> {% client.global.set("addressId", response.body.id); %}
+
+### 2.3 Buscar endereço por id
+GET {{baseUrl}}/addresses/{{addressId}}
+Authorization: Bearer {{token}}
+
+### 2.4 Atualizar (PATCH) endereço
+# Atenção: AddressReq reusa o mesmo record no create/update, então "number" e
+# "zipCode" continuam obrigatórios aqui — não é um PATCH parcial de verdade.
+PATCH {{baseUrl}}/addresses/{{addressId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "number": "482",
+  "complement": "Bloco B, Apto 61",
+  "zipCode": "01310930"
+}
+
+### 2.5 Excluir endereço (rodado no bloco de cleanup, seção 15)
+
+
+### ============================================================================
+### 3. ARTISTS (CRUD genérico) — /artists
+### ============================================================================
+
+### 3.1 Listar artistas
+GET {{baseUrl}}/artists
+Authorization: Bearer {{token}}
+
+### 3.2 Criar artista
+POST {{baseUrl}}/artists
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Pink Floyd",
+  "description": "Banda britânica de rock progressivo formada em 1965."
+}
+
+> {% client.global.set("artistId", response.body.id); %}
+
+### 3.3 Buscar artista por id
+GET {{baseUrl}}/artists/{{artistId}}
+Authorization: Bearer {{token}}
+
+### 3.4 Atualizar (PATCH) artista
+PATCH {{baseUrl}}/artists/{{artistId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "description": "Descrição atualizada da banda."
+}
+
+### 3.5 Excluir artista (rodado no bloco de cleanup, seção 15)
+
+
+### ============================================================================
+### 4. GENRES (CRUD genérico) — /genres
+### ============================================================================
+
+### 4.1 Listar gêneros
+GET {{baseUrl}}/genres
+Authorization: Bearer {{token}}
+
+### 4.2 Criar gênero
+POST {{baseUrl}}/genres
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Rock Progressivo"
+}
+
+> {% client.global.set("genreId", response.body.id); %}
+
+### 4.3 Buscar gênero por id
+GET {{baseUrl}}/genres/{{genreId}}
+Authorization: Bearer {{token}}
+
+### 4.4 Atualizar (PATCH) gênero
+PATCH {{baseUrl}}/genres/{{genreId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Progressive Rock"
+}
+
+### 4.5 Excluir gênero (rodado no bloco de cleanup, seção 15)
+
+
+### ============================================================================
+### 5. ACCESSIBILITY (CRUD genérico) — /accessibility
+### ============================================================================
+
+### 5.1 Listar recursos de acessibilidade
+GET {{baseUrl}}/accessibility
+Authorization: Bearer {{token}}
+
+### 5.2 Criar recurso de acessibilidade
+POST {{baseUrl}}/accessibility
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Audiodescrição",
+  "description": "Faixa de áudio descritivo para pessoas com deficiência visual."
+}
+
+> {% client.global.set("accessibilityId", response.body.id); %}
+
+### 5.3 Buscar recurso por id
+GET {{baseUrl}}/accessibility/{{accessibilityId}}
+Authorization: Bearer {{token}}
+
+### 5.4 Atualizar (PATCH) recurso de acessibilidade
+PATCH {{baseUrl}}/accessibility/{{accessibilityId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "description": "Descrição atualizada do recurso de acessibilidade."
+}
+
+### 5.5 Excluir recurso de acessibilidade (rodado no bloco de cleanup, seção 15)
+
+
+### ============================================================================
+### 6. VINYLS — /vinyls  (obs.: não existe DELETE nesse controller, ver 6.8)
+### ============================================================================
+
+### 6.1 Listar todos os vinis
+GET {{baseUrl}}/vinyls
+Authorization: Bearer {{token}}
+
+### 6.2 Listar vinis filtrando por gênero
+GET {{baseUrl}}/vinyls?genreId={{genreId}}
+Authorization: Bearer {{token}}
+
+### 6.3 Listar vinis filtrando por artista
+GET {{baseUrl}}/vinyls?artistId={{artistId}}
+Authorization: Bearer {{token}}
+
+### 6.4 Criar vinil
+POST {{baseUrl}}/vinyls
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "The Dark Side of the Moon",
+  "price": 129.90,
+  "description": "Álbum icônico lançado em 1973.",
+  "releasedAt": "1973",
+  "imageUrl": "https://example.com/images/dark-side-of-the-moon.jpg"
+}
+
+> {% client.global.set("vinylId", response.body.id); %}
+
+### 6.5 Buscar vinil por id (sem expand)
+GET {{baseUrl}}/vinyls/{{vinylId}}
+Authorization: Bearer {{token}}
+
+### 6.6 Buscar vinil por id, expandindo gêneros e artistas
+# Rode isso DEPOIS das seções 7 e 8 (vincular artista/gênero ao vinil) para
+# ver as listas "genres"/"artists" preenchidas na resposta.
+GET {{baseUrl}}/vinyls/{{vinylId}}?expand=genres,artists
+Authorization: Bearer {{token}}
+
+### 6.7 Atualizar (PATCH) vinil — parcial de verdade (campos nulos são ignorados)
+PATCH {{baseUrl}}/vinyls/{{vinylId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "price": 149.90,
+  "description": "Edição remasterizada em vinil 180g."
+}
+
+### 6.8 [NÃO IMPLEMENTADO] DELETE /vinyls/{id}
+# O VinylController atual não expõe nenhum método DELETE para vinil — não há
+# endpoint a testar aqui (diferente de Artist/Genre/Accessibility).
+
+
+### ============================================================================
+### 7. VINYL ↔ ARTIST — /vinyls/{vinylId}/artists
+### ============================================================================
+
+### 7.1 Listar artistas vinculados ao vinil
+GET {{baseUrl}}/vinyls/{{vinylId}}/artists
+Authorization: Bearer {{token}}
+
+### 7.2 Vincular artista ao vinil
+POST {{baseUrl}}/vinyls/{{vinylId}}/artists
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "artistId": {{artistId}}
+}
+
+### 7.3 [ROTA COM BUG CONHECIDO] Desvincular artista do vinil
+# O method DELETE de VinylJoinControllerBase declara PathVariable Long id,
+# mas a URL da classe (/vinyls/{vinylId}/artists) não tem esse segmento no
+# path. Na prática, Spring não consegue resolver "id" e lança
+# IllegalStateException, que o GlobalExceptionHandler converte em 400.
+# Ou seja: HOJE não existe forma de remover o vínculo via HTTP.
+DELETE {{baseUrl}}/vinyls/{{vinylId}}/artists
+Authorization: Bearer {{token}}
+
+
+### ============================================================================
+### 8. VINYL ↔ GENRE — /vinyls/{vinylId}/genres
+### ============================================================================
+
+### 8.1 Listar gêneros vinculados ao vinil
+GET {{baseUrl}}/vinyls/{{vinylId}}/genres
+Authorization: Bearer {{token}}
+
+### 8.2 Vincular gênero ao vinil
+POST {{baseUrl}}/vinyls/{{vinylId}}/genres
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "genreId": {{genreId}}
+}
+
+### 8.3 [ROTA COM MESMO BUG DA SEÇÃO 7.3] Desvincular gênero do vinil
+DELETE {{baseUrl}}/vinyls/{{vinylId}}/genres
+Authorization: Bearer {{token}}
+
+
+### ============================================================================
+### 9. GENRE FAVORITES — /users/{userId}/favoriteGenres
+### ============================================================================
+
+### 9.1 Listar gêneros favoritos do usuário
+GET {{baseUrl}}/users/{{userId}}/favoriteGenres
+Authorization: Bearer {{token}}
+
+### 9.2 Favoritar gênero
+POST {{baseUrl}}/users/{{userId}}/favoriteGenres
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "genreId": {{genreId}}
+}
+
+### 9.3 Desfavoritar gênero
+DELETE {{baseUrl}}/users/{{userId}}/favoriteGenres/{{genreId}}
+Authorization: Bearer {{token}}
+
+
+### ============================================================================
+### 10. USER ACCESSIBILITY — /users/{userId}/accessibility
+### ============================================================================
+
+### 10.1 Listar recursos de acessibilidade selecionados pelo usuário
+GET {{baseUrl}}/users/{{userId}}/accessibility
+Authorization: Bearer {{token}}
+
+### 10.2 Selecionar recurso de acessibilidade para o usuário
+POST {{baseUrl}}/users/{{userId}}/accessibility
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "accessibilityId": {{accessibilityId}}
+}
+
+### 10.3 Remover recurso de acessibilidade do usuário
+DELETE {{baseUrl}}/users/{{userId}}/accessibility/{{accessibilityId}}
+Authorization: Bearer {{token}}
+
+
+### ============================================================================
+### 11. CART — /users/{userId}/cartItems
+### ============================================================================
+
+### 11.1 Listar itens do carrinho
+GET {{baseUrl}}/users/{{userId}}/cartItems
+Authorization: Bearer {{token}}
+
+### 11.2 Listar itens do carrinho com vinil expandido
+GET {{baseUrl}}/users/{{userId}}/cartItems?expand=vinyl
+Authorization: Bearer {{token}}
+
+### 11.3 Adicionar itens ao carrinho em lote
+POST {{baseUrl}}/users/{{userId}}/cartItems/bulk
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "vinylIds": [{{vinylId}}]
+}
+
+### 11.4 Repetir a mesma adição (deve vir no campo "skipped" da resposta, já que já está no carrinho)
+POST {{baseUrl}}/users/{{userId}}/cartItems/bulk
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "vinylIds": [{{vinylId}}]
+}
+
+### 11.5 Remover um item específico do carrinho
+DELETE {{baseUrl}}/users/{{userId}}/cartItems/{{vinylId}}
+Authorization: Bearer {{token}}
+
+### 11.6 Adicionar de novo (para o checkout do pedido, seção 12, ter algo no carrinho)
+POST {{baseUrl}}/users/{{userId}}/cartItems/bulk
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "vinylIds": [{{vinylId}}]
+}
+
+### 11.7 Limpar carrinho inteiro (rode DEPOIS do checkout na seção 12, senão não sobra nada para o pedido)
+
+
+### ============================================================================
+### 12. ORDERS — /users/{userId}/orders  e  /orders/{id}
+### ============================================================================
+
+### 12.1 Listar pedidos do usuário
+GET {{baseUrl}}/users/{{userId}}/orders
+Authorization: Bearer {{token}}
+
+### 12.2 Fazer checkout (cria pedido a partir do carrinho do usuário)
+POST {{baseUrl}}/orders
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": {{userId}}
+}
+
+> {% client.global.set("orderId", response.body.id); %}
+
+### 12.3 Buscar pedido por id (sem expand)
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### 12.4 Buscar pedido por id, expandindo itens
+GET {{baseUrl}}/orders/{{orderId}}?expand=items
+Authorization: Bearer {{token}}
+
+### 12.5 Listar itens do pedido
+GET {{baseUrl}}/orders/{{orderId}}/items
+Authorization: Bearer {{token}}
+
+### 12.6 Limpar o carrinho (agora que o pedido já foi criado)
+DELETE {{baseUrl}}/users/{{userId}}/cartItems
+Authorization: Bearer {{token}}
+
+### 12.7 Excluir pedido (rodado no bloco de cleanup, seção 15)
+
+
+### ============================================================================
+### 13. PAYMENTS — /payments
+### ============================================================================
+
+### 13.1 Criar pagamento vinculado ao pedido
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": {{userId}},
+  "orderId": {{orderId}},
+  "value": 129.90,
+  "paymentMethod": "PIX",
+  "status": "PENDENTE"
+}
+
+> {% client.global.set("paymentId", response.body.id); %}
+
+### 13.2 Listar pagamentos (sem filtro)
+GET {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+
+### 13.3 Listar pagamentos filtrando por usuário
+GET {{baseUrl}}/payments?userId={{userId}}
+Authorization: Bearer {{token}}
+
+### 13.4 Listar pagamentos filtrando por pedido
+GET {{baseUrl}}/payments?orderId={{orderId}}
+Authorization: Bearer {{token}}
+
+### 13.5 Listar pagamentos filtrando por status e método
+GET {{baseUrl}}/payments?status=PENDENTE&paymentMethod=PIX
+Authorization: Bearer {{token}}
+
+### 13.6 Buscar pagamento por id
+GET {{baseUrl}}/payments/{{paymentId}}
+Authorization: Bearer {{token}}
+
+### 13.7 Atualizar status do pagamento (PATCH)
+PATCH {{baseUrl}}/payments/{{paymentId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "status": "APROVADO"
+}
+
+### 13.8 [NÃO IMPLEMENTADO] DELETE /payments/{id}
+# Não existe endpoint de exclusão de pagamento — é intencional (ledger financeiro).
+
+
+### ============================================================================
+### 14. CASOS NEGATIVOS / VALIDAÇÃO (não é obrigatório rodar em ordem)
+### ============================================================================
+
+### 14.1 Sem token -> 401
+GET {{baseUrl}}/users
+
+### 14.2 Token mal formado (sem "Bearer ") -> 401
+GET {{baseUrl}}/users
+Authorization: {{token}}
+
+### 14.3 Login com senha errada -> 401
+POST {{baseUrl}}/auth/tokens
+Content-Type: {{contentType}}
+
+{
+  "email": "ana.beatriz@example.com",
+  "password": "senhaErrada"
+}
+
+### 14.4 Criar usuário com campos inválidos (documento com menos de 11 dígitos) -> 400
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Usuário Inválido",
+  "document": "123",
+  "cellphone": "11999999999",
+  "email": "invalido@example.com",
+  "password": "senha123"
+}
+
+### 14.5 Buscar vinil com id inexistente -> 404
+GET {{baseUrl}}/vinyls/999999999
+Authorization: Bearer {{token}}
+
+### 14.6 Criar gênero com nome duplicado -> 409
+POST {{baseUrl}}/genres
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Progressive Rock"
+}
+
+### 14.7 Criar vinil com preço negativo (violação de @Positive) -> 400
+POST {{baseUrl}}/vinyls
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Vinil Inválido",
+  "price": -10,
+  "releasedAt": "2024"
+}
+
+### 14.8 Acessar endereço de outro usuário -> 403 (ownership)
+GET {{baseUrl}}/addresses/{{addressId}}
+Authorization: Bearer {{token2}}
+
+### ============================================================================
+### 15. CLEANUP — exclusão dos recursos criados nesta coleção
+### ============================================================================
+
+### 15.1 Excluir pedido
+DELETE {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### 15.2 Excluir endereço
+DELETE {{baseUrl}}/addresses/{{addressId}}
+Authorization: Bearer {{token}}
+
+### 15.3 Excluir recurso de acessibilidade
+DELETE {{baseUrl}}/accessibility/{{accessibilityId}}
+Authorization: Bearer {{token}}
+
+### 15.4 Excluir gênero
+DELETE {{baseUrl}}/genres/{{genreId}}
+Authorization: Bearer {{token}}
+
+### 15.5 Excluir artista
+DELETE {{baseUrl}}/artists/{{artistId}}
+Authorization: Bearer {{token}}
+
+### 15.6 Excluir segundo usuário (usando o próprio token dele)
+DELETE {{baseUrl}}/users/{{userId2}}
+Authorization: Bearer {{token2}}
+
+### 15.7 Excluir usuário principal (por último, já que outros tokens dependem dele)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}

@@ -17,6 +17,4 @@ import lombok.Setter;
 public class Genre extends ModelBase {
     @Column(name = "name", nullable = false, length = 50, unique = true)
     private String name;
-
-
 }

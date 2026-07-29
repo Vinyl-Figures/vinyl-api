@@ -11,4 +11,10 @@ import lombok.Setter;
 @Entity
 @Table(name = "accessibility")
 public class Accessibility extends NameDescriptionBase {
+    public Accessibility(String name, String description) {
+        super(name, description);
+    }
+
+    public Accessibility() {
+    }
 }
