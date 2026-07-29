@@ -26,12 +26,12 @@ public class Payment extends TimestampBase {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "payment_method", nullable = false)
+    @Column(name = "payment_method", nullable = false, columnDefinition = "payment_method")
     private PaymentMethod paymentMethod;
-
+    
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "status")
     private PaymentStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
