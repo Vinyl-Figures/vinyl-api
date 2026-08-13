@@ -37,4 +37,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 CMD bash -c 'echo > /dev/tcp/127.0.0.1/8080' || exit 1
 
 # executa app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms32m", "-Xmx224m", "-XX:MaxMetaspaceSize=96m", "-XX:ReservedCodeCacheSize=48m", "-XX:+UseSerialGC", "-XX:MaxDirectMemorySize=32m", "-Xss512k", "-jar", "app.jar"]
