@@ -6,6 +6,7 @@ public record CartItemResp(
         Long id,
         Long userId,
         Long vinylId,
+        Integer quantity,
         VinylSummary vinyl
 ) {
 }

@@ -5,6 +5,8 @@ import br.com.acta.vinylpgapi.common.exceptions.ValidationException;
 import br.com.acta.vinylpgapi.dto.order.OrderItemResp;
 import br.com.acta.vinylpgapi.dto.order.OrderReq;
 import br.com.acta.vinylpgapi.dto.order.OrderResp;
+import br.com.acta.vinylpgapi.dto.shipping.ShippingResp;
+import br.com.acta.vinylpgapi.model.Coupon;
 import br.com.acta.vinylpgapi.model.Order;
 import br.com.acta.vinylpgapi.model.join.Cart;
 import br.com.acta.vinylpgapi.model.join.OrderItem;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -26,6 +29,8 @@ public class OrderService {
     private final OrderRepository repo;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
+    private final ShippingService shippingService;
+    private final CouponService couponService;
 
     @Transactional
     public OrderResp checkout(OrderReq dto, Long calledUser){
@@ -34,9 +39,32 @@ public class OrderService {
         List<Cart> cartItems = cartRepository.findByUserId(dto.userId());
         if (cartItems.isEmpty()) throw new ValidationException("Cart is empty");
 
+        BigDecimal subtotal = cartItems.stream()
+                .map(c -> c.getVinyl().getPrice().multiply(BigDecimal.valueOf(c.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal shippingPrice = BigDecimal.ZERO;
+        if (dto.zipCode() != null) {
+            ShippingResp shipping = shippingService.calculate(dto.zipCode());
+            shippingPrice = shipping.price();
+        }
+
+        String couponCode = null;
+        BigDecimal total = subtotal.add(shippingPrice);
+        if (dto.couponCode() != null) {
+            Coupon coupon = couponService.getEntityByCode(dto.couponCode());
+            BigDecimal fator = BigDecimal.ONE.subtract(
+                    coupon.getDiscountPercent().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+            );
+            total = total.multiply(fator).setScale(2, RoundingMode.HALF_UP);
+            couponCode = coupon.getCode();
+        }
+
         Order order = new Order(
                 cartItems.getFirst().getUser(),
-                cartItems.stream().map(c -> c.getVinyl().getPrice()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                total,
+                shippingPrice,
+                couponCode
         );
 
         Order saved = repo.save(order);
@@ -45,7 +73,8 @@ public class OrderService {
             OrderItem orderItem = new OrderItem(
                     saved,
                     c.getVinyl(),
-                    c.getVinyl().getPrice()
+                    c.getVinyl().getPrice(),
+                    c.getQuantity()
             );
 
             return orderItemRepository.save(orderItem);
@@ -90,6 +119,8 @@ public class OrderService {
                 order.getId(),
                 order.getUser().getId(),
                 order.getTotalPrice(),
+                order.getShippingPrice(),
+                order.getCouponCode(),
                 order.getCreatedAt(),
                 itemResps
         );
@@ -99,7 +130,8 @@ public class OrderService {
         return new OrderItemResp(
                 orderItem.getId(),
                 orderItem.getVinyl().getId(),
-                orderItem.getPriceAtPurchase()
+                orderItem.getPriceAtPurchase(),
+                orderItem.getQuantity()
         );
     }
 }

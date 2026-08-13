@@ -27,4 +27,7 @@ public class Cart extends ModelBase {
     @JoinColumn(name = "id_vinyl", nullable = false)
     private Vinyl vinyl;
 
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
 }

@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record OrderReq(
         @NotNull
-        Long userId
+        Long userId,
+        String zipCode,
+        String couponCode
 ) {
 }

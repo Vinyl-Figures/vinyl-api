@@ -8,6 +8,8 @@ public record OrderResp(
         Long id,
         Long userId,
         BigDecimal totalPrice,
+        BigDecimal shippingPrice,
+        String couponCode,
         OffsetDateTime createdAt,
         List<OrderItemResp> items
 ) {

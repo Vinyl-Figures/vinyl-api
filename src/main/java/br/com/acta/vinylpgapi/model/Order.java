@@ -24,4 +24,10 @@ public class Order extends TimestampBase {
     @NotNull
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
+
+    @Column(name = "shipping_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal shippingPrice;
+
+    @Column(name = "coupon_code")
+    private String couponCode;
 }

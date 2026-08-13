@@ -47,15 +47,17 @@ public class CartService {
             Vinyl vinyl = vinylService.getEntity(vinylId);
             User user = userService.getEntity(userId);
 
-            if (repo.existsByUserIdAndVinylId(userId, vinylId)) {
-                skipped.put(vinylId, "Already in Cart");
-                continue;
-            }
+            // Já no carrinho: soma quantidade em vez de pular.
+            Cart cart = repo.findByUserIdAndVinylId(userId, vinylId)
+                    .map(existente -> {
+                        existente.setQuantity(existente.getQuantity() + 1);
+                        return existente;
+                    })
+                    .orElseGet(() -> new Cart(user, vinyl, 1));
 
-            Cart cart = new Cart(user, vinyl);
             Cart saved = repo.save(cart);
 
-            created.add(new CartItemResp(saved.getId(), userId, vinylId, null));
+            created.add(new CartItemResp(saved.getId(), userId, vinylId, saved.getQuantity(), null));
         }
 
         return new AddCartItemResp(created, skipped);
@@ -82,6 +84,6 @@ public class CartService {
             summary = new VinylSummary(vinyl.getId(), vinyl.getTitle(), vinyl.getPrice());
         }
 
-        return new CartItemResp(cart.getId(), cart.getUser().getId(), cart.getVinyl().getId(), summary);
+        return new CartItemResp(cart.getId(), cart.getUser().getId(), cart.getVinyl().getId(), cart.getQuantity(), summary);
     }
 }

@@ -38,6 +38,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        // preflight do CORS: navegador nunca manda Authorization aqui, e a
+        // resposta ainda precisa passar pelo DispatcherServlet pra ganhar o
+        // header Access-Control-Allow-Origin. Sem isso, todo POST/PATCH/DELETE
+        // entre origens diferentes falha no preflight, mesmo em rota pública.
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // does not check if the route is public
         if (isPublicRoute(request)) {
             filterChain.doFilter(request, response);

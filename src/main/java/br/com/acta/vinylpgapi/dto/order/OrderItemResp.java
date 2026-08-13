@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record OrderItemResp(
         Long id,
         Long vinylId,
-        BigDecimal priceAtPurchase
+        BigDecimal priceAtPurchase,
+        Integer quantity
 ) {
 }
