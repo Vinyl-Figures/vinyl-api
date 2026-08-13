@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.ObjectMapper;
 
@@ -17,68 +18,71 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
-
-    // represents a route that can be accessed without authentication
-    private record Route(String method, String path) {
-        boolean matches(HttpServletRequest req){
-            return method.equalsIgnoreCase(req.getMethod()) && path.equals(req.getRequestURI());
-        }
-    }
-
     public static final String USER_ID = "userId";
 
-    // routes that does not need token check
-    public static final List<Route> PUBLIC_ROUTES = List.of(
+    private static final List<Route> PUBLIC_ROUTES = List.of(
             new Route("POST", "/api/v1/users"),
             new Route("POST", "/api/v1/auth/tokens")
     );
+
     private final JwtService service;
     private final ObjectMapper mapper;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        // preflight do CORS: navegador nunca manda Authorization aqui, e a
-        // resposta ainda precisa passar pelo DispatcherServlet pra ganhar o
-        // header Access-Control-Allow-Origin. Sem isso, todo POST/PATCH/DELETE
-        // entre origens diferentes falha no preflight, mesmo em rota pública.
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
+    private record Route(String method, String path) {
+        boolean matches(HttpServletRequest request) {
+            return method.equalsIgnoreCase(request.getMethod()) && path.equals(request.getRequestURI());
         }
+    }
 
-        // does not check if the route is public
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return CorsUtils.isPreFlightRequest(request);
+    }
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
         if (isPublicRoute(request)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // checks for a valid token in the header
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer")) {
+        String authorization = request.getHeader("Authorization");
+
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
             reject(response);
             return;
         }
 
-        // send requisition to controller
         try {
-            Long userId = service.userIdConverter(header.substring("Bearer ".length()));
+            String token = authorization.substring("Bearer ".length());
+            Long userId = service.userIdConverter(token);
+
             request.setAttribute(USER_ID, userId);
             filterChain.doFilter(request, response);
-        } catch (Exception e) {
+        } catch (Exception exception) {
             reject(response);
         }
     }
 
     private boolean isPublicRoute(HttpServletRequest request) {
-        return PUBLIC_ROUTES.stream().anyMatch(r -> r.matches(request));
+        return PUBLIC_ROUTES.stream()
+                .anyMatch(route -> route.matches(request));
     }
 
     private void reject(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // error 401
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
         response.getWriter().write(mapper.writeValueAsString(
-                new ApiError(List.of("A valid bearer token is required"), null)
+                new ApiError(
+                        List.of("A valid bearer token is required"),
+                        null
+                )
         ));
     }
 }
