@@ -4,6 +4,7 @@ import br.com.acta.vinylpgapi.common.security.CurrentUser;
 import br.com.acta.vinylpgapi.dto.cart.AddCartItemReq;
 import br.com.acta.vinylpgapi.dto.cart.AddCartItemResp;
 import br.com.acta.vinylpgapi.dto.cart.CartItemResp;
+import br.com.acta.vinylpgapi.dto.cart.UpdateCartItemReq;
 import br.com.acta.vinylpgapi.service.join.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,11 @@ public class CartController {
     @PostMapping("/bulk")
     public ResponseEntity<AddCartItemResp> bulkAdd(@PathVariable Long userId, @Valid @RequestBody AddCartItemReq dto){
         return ResponseEntity.status(201).body(service.addCartItemResp(userId, currentUser.getUserId(), dto));
+    }
+
+    @PatchMapping("/{vinylId}")
+    public ResponseEntity<CartItemResp> updateQuantity(@PathVariable Long userId, @PathVariable Long vinylId, @Valid @RequestBody UpdateCartItemReq dto){
+        return ResponseEntity.ok(service.updateQuantity(userId, currentUser.getUserId(), vinylId, dto));
     }
 
     @DeleteMapping("/{vinylId}")

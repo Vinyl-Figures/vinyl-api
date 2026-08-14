@@ -1,5 +1,6 @@
 package br.com.acta.vinylpgapi.service;
 
+import br.com.acta.vinylpgapi.common.exceptions.ConflictException;
 import br.com.acta.vinylpgapi.common.exceptions.EntityNotFoundException;
 import br.com.acta.vinylpgapi.common.exceptions.ValidationException;
 import br.com.acta.vinylpgapi.dto.order.OrderItemResp;
@@ -53,6 +54,11 @@ public class OrderService {
         BigDecimal total = subtotal.add(shippingPrice);
         if (dto.couponCode() != null) {
             Coupon coupon = couponService.getEntityByCode(dto.couponCode());
+
+            if (repo.existsByUserIdAndCouponCode(dto.userId(), coupon.getCode())) {
+                throw new ConflictException("Coupon " + coupon.getCode(), "User " + dto.userId());
+            }
+
             BigDecimal fator = BigDecimal.ONE.subtract(
                     coupon.getDiscountPercent().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
             );

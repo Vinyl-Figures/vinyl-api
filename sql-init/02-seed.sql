@@ -17,13 +17,13 @@ INSERT INTO artists (name, description) VALUES
 -- a API real devolve (assets/js/view/templates.js:fonteDaImagem espera
 -- exatamente isso).
 INSERT INTO vinyls (title, price, description, released_at, image_url) VALUES
-  ('Happier Than Ever', 150.00, 'Segundo álbum de estúdio de Billie Eilish.', '2021', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('AM', 130.00, 'Quinto álbum de estúdio do Arctic Monkeys.', '2013', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('Bad', 200.00, 'Sétimo álbum de estúdio de Michael Jackson.', '1987', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('xx', 120.00, 'Álbum de estreia da banda The xx.', '2009', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('X&Y', 130.00, 'Terceiro álbum de estúdio do Coldplay.', '2005', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('Only by the Night', 130.00, 'Quarto álbum de estúdio do Kings of Leon.', '2008', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),
-  ('MTV Unplugged', 150.00, 'Álbum ao vivo do Placebo.', '2004', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+  ('Happier Than Ever', 150.00, 'Segundo álbum de estúdio de Billie Eilish.', '2021', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('AM', 130.00, 'Quinto álbum de estúdio do Arctic Monkeys.', '2013', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('Bad', 200.00, 'Sétimo álbum de estúdio de Michael Jackson.', '1987', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('xx', 120.00, 'Álbum de estreia da banda The xx.', '2009', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('X&Y', 130.00, 'Terceiro álbum de estúdio do Coldplay.', '2005', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('Only by the Night', 130.00, 'Quarto álbum de estúdio do Kings of Leon.', '2008', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII='),
+  ('MTV Unplugged', 150.00, 'Álbum ao vivo do Placebo.', '2004', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAbitOmMAAAAASUVORK5CYII=');
 
 -- vinyl_artists (por título/nome, sem depender da ordem dos IDs)
 INSERT INTO vinyl_artists (id_vinyl, id_artist)

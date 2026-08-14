@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface OrderRepository extends RepositoryBase<Order> {
     List<Order> findByUserId(Long userId);
+    boolean existsByUserIdAndCouponCode(Long userId, String couponCode);
 }

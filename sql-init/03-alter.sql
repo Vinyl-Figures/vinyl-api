@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS coupons (
   discount_percent NUMERIC(5,2) NOT NULL CHECK (discount_percent > 0 AND discount_percent <= 100)
 );
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(30);
+
+INSERT INTO coupons (code, discount_percent) VALUES ('RODOLFO', 60)
+ON CONFLICT (code) DO NOTHING;

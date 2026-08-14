@@ -4,6 +4,7 @@ import br.com.acta.vinylpgapi.common.exceptions.EntityNotFoundException;
 import br.com.acta.vinylpgapi.dto.cart.AddCartItemReq;
 import br.com.acta.vinylpgapi.dto.cart.AddCartItemResp;
 import br.com.acta.vinylpgapi.dto.cart.CartItemResp;
+import br.com.acta.vinylpgapi.dto.cart.UpdateCartItemReq;
 import br.com.acta.vinylpgapi.dto.vinyl.VinylSummary;
 import br.com.acta.vinylpgapi.model.User;
 import br.com.acta.vinylpgapi.model.Vinyl;
@@ -61,6 +62,19 @@ public class CartService {
         }
 
         return new AddCartItemResp(created, skipped);
+    }
+
+    @Transactional
+    public CartItemResp updateQuantity(Long userId, Long calledUserId, Long vinylId, UpdateCartItemReq dto){
+        Validation.checkOwnership(userId, calledUserId);
+
+        Cart cart = repo.findByUserIdAndVinylId(userId, vinylId)
+                .orElseThrow(() -> new EntityNotFoundException("The Item in cart with User ID " + userId + " and Vinyl ID " + vinylId + " not found"));
+
+        cart.setQuantity(dto.quantity());
+        Cart saved = repo.save(cart);
+
+        return toResp(saved, false);
     }
 
     public void remove(Long userId, Long calledUserId, Long vinylId){
