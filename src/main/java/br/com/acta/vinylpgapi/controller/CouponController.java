@@ -1,5 +1,6 @@
 package br.com.acta.vinylpgapi.controller;
 
+import br.com.acta.vinylpgapi.common.security.CurrentUser;
 import br.com.acta.vinylpgapi.controller.base.ControllerBase;
 import br.com.acta.vinylpgapi.dto.coupon.CouponResp;
 import br.com.acta.vinylpgapi.dto.coupon.CreateCouponReq;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CouponController extends ControllerBase<CreateCouponReq, UpdateCouponReq, CouponResp> {
     private final CouponService service;
+    private final CurrentUser currentUser;
 
     @Override
     protected ServiceBase<CreateCouponReq, UpdateCouponReq, CouponResp, ?> service() {
@@ -26,10 +28,12 @@ public class CouponController extends ControllerBase<CreateCouponReq, UpdateCoup
     }
 
     // Pré-visualização do desconto pelo código, pro botão "Aplicar cupom"
-    // do carrinho — sem precisar saber o id numérico do cupom.
+    // do carrinho — sem precisar saber o id numérico do cupom. Também
+    // avisa aqui se o cupom já foi usado pelo usuário logado, em vez de
+    // deixar isso só estourar na hora de finalizar o pedido.
     @GetMapping("/code/{code}")
     public ResponseEntity<CouponResp> getByCode(@PathVariable String code) {
-        Coupon coupon = service.getEntityByCode(code);
+        Coupon coupon = service.getEntityByCodeForUser(code, currentUser.getUserId());
         return ResponseEntity.ok(new CouponResp(coupon.getId(), coupon.getCode(), coupon.getDiscountPercent()));
     }
 }

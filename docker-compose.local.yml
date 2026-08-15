@@ -17,6 +17,13 @@ services:
 
   api:
     build: .
+    # O Dockerfile tem limites de memória bem apertados (-Xmx224m,
+    # MaxMetaspaceSize=96m), calibrados pro deploy real num host com pouca
+    # RAM — bom lá, mas causa OutOfMemoryError aqui no dev local assim que
+    # o app carrega mais classes (primeira request "de verdade" depois do
+    # boot, com spring.main.lazy-initialization=true). Sobrescreve só pro
+    # compose local; a imagem/Dockerfile de produção continua intocada.
+    entrypoint: ["java", "-Xms64m", "-Xmx512m", "-XX:MaxMetaspaceSize=256m", "-XX:ReservedCodeCacheSize=64m", "-jar", "app.jar"]
     environment:
       DB_URL: jdbc:postgresql://db:5432/vinyl
       DB_USERNAME: vinyl
